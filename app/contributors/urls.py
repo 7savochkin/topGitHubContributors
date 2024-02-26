@@ -1,6 +1,6 @@
 from django.urls import path
-from contributors.views import main
+from contributors.views import TopContributorsView
 
 urlpatterns = [
-    path('', main)
+    path('', TopContributorsView.as_view())
 ]

@@ -1,5 +1,21 @@
-from django.http import HttpResponse
+from django.core.exceptions import ValidationError
+from django.views.generic import FormView
+
+from contributors.forms import RepositoryForm
+from contributors.services import ContributorsService
 
 
-def main(request):
-    return HttpResponse('<h1>Hello world!</h1>')
+class TopContributorsView(FormView):
+    """Form View for getting top 5 contributors of GitHub repository"""
+    template_name = "index.html"
+    form_class = RepositoryForm
+
+    def form_valid(self, form: RepositoryForm):
+        validated_url = form.cleaned_data.get('repository_url')
+        service = ContributorsService(url=validated_url)
+        try:
+            service.run()
+        except ValidationError as error:
+            form.add_error(field='repository_url', error=error)
+            return self.form_invalid(form)
+        breakpoint()
