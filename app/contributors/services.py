@@ -1,71 +1,116 @@
-import re
-from typing import Tuple, List
-
-from django.core.exceptions import ValidationError
+from abc import ABC, abstractmethod
+from typing import List, Tuple
 
 from contributors.client import client
+from contributors.filters import FilterByCommonContributors
+from contributors.validators import RepositoryUrlGitHubValidator, \
+    RepositoryResponseAPICodeValidator
 
 
-class CommonContributorsService:
-    """Service for getting top 5 contributors of GitHub repository"""
-    regex_pattern = r"github\.com/([^/]+)/([^/]+)"
+class BaseAPIService(ABC):
+    """Base Service for getting data from API"""
 
-    def __init__(self, url: str) -> None:
-        self.url = url
+    @abstractmethod
+    def get_path_of_url(self, *args, **kwargs) -> None:
+        """Abstract method for getting path of API url"""
+        pass
 
-    def _get_owner_and_repo_from_url(self) -> Tuple[str, str]:
+    @abstractmethod
+    def from_api(self, *args, **kwargs) -> None:
+        """Abstract method for request and get data from API"""
+        pass
+
+
+class ContributorsAPIService(BaseAPIService):
+    """Service for getting contributors of project by link on repository"""
+
+    def __init__(self, owner, repository_name):
+        self.owner = owner
+        self.repository_name = repository_name
+
+    def get_path_of_url(self) -> str:
         """
-        Getting owner and repository name from link
-        :return owner and repo name
-        """
-        match = re.search(self.regex_pattern, self.url)
-        if match:
-            owner = match.group(1)
-            repository_name = match.group(2)
-        else:
-            raise ValidationError('Link must have owner and repository name')
-        return owner, repository_name
-
-    def _generate_path_for_get_contributors(self) -> str:
-        """
-        Generate path of url to GitHub API for getting top contributors of repository
+        Generate path of url to GitHub API for getting top
+        contributors of repository
         :return path of url to GitHub API
         """
-        owner, repository_name = self._get_owner_and_repo_from_url()
-        return f'/repos/{owner}/{repository_name}/contributors'
+        return f'/repos/{self.owner}/{self.repository_name}/contributors'
 
-    def get_contributors_login_from_api(self) -> List[str]:
+    def from_api(self) -> List[str]:
         """
         Get contributors from GitHub API
         :return: list of contributors login from api
         """
-        path = self._generate_path_for_get_contributors()
+        path = self.get_path_of_url()
 
         contributors, code = client.get(path=path)
+        RepositoryResponseAPICodeValidator.validate(code)
 
-        if code >= 400:
-            raise ValidationError(
-                "Repository doesn't exist or has not contributors")
         return [item.get('login') for item in contributors]
 
-    def _generate_path_for_repositories_of_user(self, user: str) -> str: # noqa
+
+class RepositoriesAPIService(BaseAPIService):
+    """Service for getting repositories of users on repository"""
+    def __init__(self, users: List[str]) -> None:
+        self.users = users
+
+    def get_path_of_url(self, user: str) -> str:
+        """
+        Generate user's repositories path of url to GitHub API
+        for getting top contributors of repository
+        :param user - login of GitHub user
+        :return user's repositories path url to GitHub API
+        """
         return f"/users/{user}/repos"
 
-    def get_repositories_names_of_contributors_from_api(self) -> List[str]:
+    def from_api(self) -> List[str]:
         """
         Get contributor's repositories names from GitHub API
         :return: list of repositories names from GitHub API
         """
-        all_repos = list()
+        repository_names_list = list()
 
-        contributors = self.get_contributors_login_from_api()
-        for user in contributors:
-            path = self._generate_path_for_repositories_of_user(user)
+        for user in self.users:
+            path = self.get_path_of_url(user)
             repositories, code = client.get(path=path)
-            all_repos.extend({rep['name'] for rep in repositories if rep.get('name')})
-        return all_repos
+            repository_names_list.extend(
+                {rep['name'] for rep in repositories if rep.get('name')}
+            )
+        return repository_names_list
 
-    def run(self):
-        repositories = self.get_repositories_names_of_contributors_from_api()
-        breakpoint()
-        return repositories
+
+class TopRepositoriesService:
+    """Service for top 5 repositories by common contributors"""
+
+    def __init__(self, url: str) -> None:
+        self.url = url
+
+    def _get_contributors_of_repository(self) -> List[str]:
+        """
+        Getting contributors of repository by url
+        :return list of contributors login
+        """
+        owner, repository_name = RepositoryUrlGitHubValidator.validate(self.url) # noqa
+        contributors_api = ContributorsAPIService(owner=owner,
+                                                  repository_name=repository_name) # noqa
+        return contributors_api.from_api()
+
+    def _get_repositories_of_contributors(self, contributors: List[str]) -> List[str]: # noqa
+        """
+        Getting repositories of contributors
+        :param contributors - list of contributors
+        :return list of repositories name
+        """
+        repositories_api = RepositoriesAPIService(users=contributors)
+        return repositories_api.from_api()
+
+    def process(self) -> List[Tuple[str, int]]:
+        """
+        Processing data and filter repositories and
+        return 5 with most contributors
+        :return: list of top 5 repositories with most contributors
+        """
+        contributors = self._get_contributors_of_repository()
+        repositories = self._get_repositories_of_contributors(contributors)
+        filtered_repositories = FilterByCommonContributors.filter(repositories)
+        return filtered_repositories

@@ -12,7 +12,8 @@
         <h1>Get Top 5 contributors of GitHub repository</h1>
     </header>
     <main>
-        <form method="post">
+        <form method="post"
+              onsubmit="this.submit(); this.reset(); return false;">
             {% csrf_token %}
             {% for field in form %}
                 {{ field.errors }}
@@ -20,6 +21,14 @@
             {% endfor %}
             <button type="submit">Get contributors</button>
         </form>
+    {% if current_repository_url %}
+        <strong>Similar to <a href={{ current_repository_url }}>{{ current_repository_url }}</a></strong>
+    {% endif %}
+    <br/>
+    {% for repository in top_repositories %}
+        <br/>
+        {{ repository.0 }} - {{ repository.1 }} common contributors
+    {% endfor %}
     </main>
 </body>
 </html>

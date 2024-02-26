@@ -1,25 +1,29 @@
 import requests
+
 from typing import Union, Tuple
 
 from core.client import BaseAPIClient
+from app import settings
 
 
 class GitHubAPIClient(BaseAPIClient):
     """API Client for GitHub API"""
 
     def get_headers(self) -> dict:
-        api_key = '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'
+        """
+        Getting headers for request to API
+        :return dictionary of headers
+        """
         headers = {
-            "Authorization": f"Bearer {api_key}",
-            "X-GitHub-Api-Version": "2022-11-28"
+            "Authorization": f"Bearer {self.api_key}",
         }
         return headers
 
-    def get(self, path: str, *args, **kwargs) -> Tuple[list[dict], int]:
+    def get(self, path: str, *args, **kwargs) -> Tuple[Union[list[dict], dict], int]: # noqa
         """
         Realize HTTP method GET to GitHub API
         :param path: path of url GitHub API
-        :return: tuple with first element - response data
+        :returns: tuple with first element - response data
         second element - status code of response
         """
         url = self.base_url + path
@@ -41,4 +45,5 @@ class GitHubAPIClient(BaseAPIClient):
         pass
 
 
-client = GitHubAPIClient(base_url="https://api.github.com")
+client = GitHubAPIClient(base_url="https://api.github.com",
+                         api_key=settings.GITHUB_API_KEY)
