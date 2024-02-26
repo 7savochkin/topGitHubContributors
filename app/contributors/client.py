@@ -1,29 +1,31 @@
+import requests
 from typing import Union, Tuple
 
-import requests
 from core.client import BaseAPIClient
 
 
-class GitHubContributorsAPIClient(BaseAPIClient):
-    """API Client for GitHub Contributors"""
+class GitHubAPIClient(BaseAPIClient):
+    """API Client for GitHub API"""
 
-    # def __init__(self, base_url: str = "https://api.github.com",
-    #              api_key: str = None) -> None:
-    #     """Set base GitHub api link as default url"""
-    #     super().__init__(base_url, api_key)
+    def get_headers(self) -> dict:
+        api_key = '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'
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "X-GitHub-Api-Version": "2022-11-28"
+        }
+        return headers
 
-    def get(self, repo_owner: str = '',
-            repo_name: str = '', *args, **kwargs) -> Tuple[list[dict], int]:
+    def get(self, path: str, *args, **kwargs) -> Tuple[list[dict], int]:
         """
-        Get all repository from GitHub API
-        :param repo_owner: owner of repository GitHub
-        :param repo_name: name of repository GitHub
-        :return: tuple with first element - list of contributors dict
+        Realize HTTP method GET to GitHub API
+        :param path: path of url GitHub API
+        :return: tuple with first element - response data
         second element - status code of response
         """
-        url = f'{self.base_url}/repos/{repo_owner}/{repo_name}/contributors'
+        url = self.base_url + path
+        headers = self.get_headers()
 
-        response = requests.get(url=url)
+        response = requests.get(url=url, headers=headers)
         return response.json(), response.status_code
 
     def post(self, body: dict, *args, **kwargs) -> None:
@@ -37,3 +39,6 @@ class GitHubContributorsAPIClient(BaseAPIClient):
     def delete(self, value: Union[int, str], *args, **kwargs) -> None:
         """Not allowed method"""
         pass
+
+
+client = GitHubAPIClient(base_url="https://api.github.com")

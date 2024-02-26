@@ -21,6 +21,14 @@ class BaseAPIClient(ABC):
         return self._api_key
 
     @abstractmethod
+    def get_headers(self) -> None:
+        """
+        Abstract method for getting headers
+        :return: None
+        """
+        pass
+
+    @abstractmethod
     def get(self, *args, **kwargs) -> None:
         """
         Abstract method for HTTP GET method

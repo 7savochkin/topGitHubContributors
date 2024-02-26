@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.views.generic import FormView
 
 from contributors.forms import RepositoryForm
-from contributors.services import ContributorsService
+from contributors.services import CommonContributorsService
 
 
 class TopContributorsView(FormView):
@@ -12,7 +12,7 @@ class TopContributorsView(FormView):
 
     def form_valid(self, form: RepositoryForm):
         validated_url = form.cleaned_data.get('repository_url')
-        service = ContributorsService(url=validated_url)
+        service = CommonContributorsService(url=validated_url)
         try:
             service.run()
         except ValidationError as error:
