@@ -7,5 +7,5 @@ Application for getting top five contributors of GitHub repository
 
 * First of all create file .env
 * Next, you should set your environmental variables by ``./app/.env_example``
-* Finally, you should build the docker container and it's works - ``docker compose up -d --build``
+* Finally, you should build the docker container and it's works - ``docker compose up``
 * So, check that it's works by search in browser ``http://localhost:8000/``

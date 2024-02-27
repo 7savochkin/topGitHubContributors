@@ -17,7 +17,9 @@ RUN pip install --upgrade pip
 COPY requirements*.txt ./
 
 RUN pip install -r requirements.txt
-RUN pip install -r requirements.dev.txt
+
+# only for Dev mode
+#RUN pip install -r requirements.dev.txt
 
 # copy rest project files
 COPY . .
