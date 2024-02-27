@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.template.response import TemplateResponse
 from django.views.generic import FormView
 
 from contributors.exceptions import ValidationRepositoryUrlError
@@ -7,11 +8,14 @@ from contributors.services import TopRepositoriesService
 
 
 class TopContributorsView(FormView):
-    """Form View for getting top 5 contributors of GitHub repository"""
+    """
+    Form View for getting top 5 repositories
+    with the most common contributors
+    """
     template_name = "index.html"
     form_class = RepositoryForm
 
-    def form_valid(self, form: RepositoryForm):
+    def form_valid(self, form: RepositoryForm) -> TemplateResponse:
         validated_url = form.cleaned_data.get('repository_url')
         service = TopRepositoriesService(url=validated_url)
         try:

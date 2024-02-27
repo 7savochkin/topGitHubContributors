@@ -1,6 +1,6 @@
 import requests
 
-from typing import Union, Tuple
+from typing import Union, Tuple, List, Dict
 
 from core.client import BaseAPIClient
 from app import settings
@@ -19,7 +19,7 @@ class GitHubAPIClient(BaseAPIClient):
         }
         return headers
 
-    def get(self, path: str, *args, **kwargs) -> Tuple[Union[list[dict], dict], int]: # noqa
+    def get(self, path: str, *args, **kwargs) -> Tuple[Union[List[Dict], Dict], int]: # noqa
         """
         Realize HTTP method GET to GitHub API
         :param path: path of url GitHub API
@@ -32,11 +32,11 @@ class GitHubAPIClient(BaseAPIClient):
         response = requests.get(url=url, headers=headers)
         return response.json(), response.status_code
 
-    def post(self, body: dict, *args, **kwargs) -> None:
+    def post(self, body: Dict, *args, **kwargs) -> None:
         """Not allowed method"""
         pass
 
-    def put(self, body: dict, *args, **kwargs) -> None:
+    def put(self, body: Dict, *args, **kwargs) -> None:
         """Not allowed method"""
         pass
 

@@ -29,10 +29,18 @@ class RepositoryUrlGitHubValidator(BaseValidator):
 
 class RepositoryResponseAPICodeValidator(BaseValidator):
     """Validator for response code"""
-    MIN_ERROR_CODE = 400
+    BAD_REQUEST_CODE = 400
+    PERMISSION_DENIED_CODE = 401
+    DOESNT_EXISTS_ERROR_CODES = 402
+    SERVER_ERROR_CODES = 500
 
     @classmethod
     def validate(cls, data) -> None:
-        if data >= cls.MIN_ERROR_CODE:
+        if cls.SERVER_ERROR_CODES >= data >= cls.DOESNT_EXISTS_ERROR_CODES:
             raise ValidationRepositoryUrlError(
                 "Repository doesn't exist or has not contributors")
+        elif data == cls.PERMISSION_DENIED_CODE:
+            raise ValidationRepositoryUrlError(
+                "You should add git hub API key")
+        elif data == cls.BAD_REQUEST_CODE or data >= cls.SERVER_ERROR_CODES:
+            raise ValidationRepositoryUrlError("Something went wrong")
